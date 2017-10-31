@@ -76,14 +76,14 @@ def loglikhelihood(sentence):
 
     startIndex = words.index('<s>')
     firstWordIndex = words.index(w1[0])
-    bll += log(bicount[startIndex][firstWordIndex] / ucount[startIndex])
+    bll += log(bicount[startIndex][firstWordIndex] / sum(bicount[startIndex]))
 
-    for i in range(0, len(w1) - 2):
+    for i in range(0, len(w1) - 1):
         curr = words.index(w1[i])
         nxt = words.index(w1[i + 1])
-        #print(ucount[curr])
-        prob = bicount[curr][nxt]/ucount[curr]
+        prob = bicount[curr][nxt]/sum(bicount[curr])
         if(prob < eps):
+            print(words[curr]+ " - " +words[nxt])
             prob = eps
         bll += log(prob)
 
@@ -100,32 +100,41 @@ def weightedmode(sentence):
     w1 = sentence.split(' ')
     uniprob = []
     biprob = []
-    lam=0
+    lam=0.0
     startIndex = words.index('<s>')
     firstWordIndex = words.index(w1[0])
-    uniprob.append(ucount[firstWordIndex]/total)
-    biprob.append(bicount[startIndex][firstWordIndex]/ucount[startIndex])
-    for i in range(0, len(w1) - 2):
+    biprob.append(bicount[startIndex][firstWordIndex]/sum(bicount[startIndex]))
+    for i in range(0, len(w1)):
         curr = words.index(w1[i])
-        nxt = words.index(w1[i+1])
-        uniprob.append(ucount[curr]/total)
-        biprob.append(bicount[curr][nxt]/ucount[curr])
-        i = i+1
+        if(i+1 < len(w1)):
+            print(w1[i])
+            print(w1[i + 1] + "--")
+            nxt = words.index(w1[i + 1])
+            uniprob.append(ucount[curr] / total)
+            biprob.append(bicount[curr][nxt] / sum(bicount[curr]))
+        else:
+            uniprob.append(ucount[curr]/total)
+
     X = []
     Y = []
-    for l in range(0, 101):
+    for l in range(0, 1001):
         print(lam)
-        X.append(l)
+        X.append(lam)
         ll = 0
-        totalprob = 0
-        wordprob = []
-        for i in range(0, len(biprob)-1):
-            wordprob.append(mixtureProb(l, uniprob[i], biprob[i]))
-            if(wordprob[i]<eps):
-                wordprob[i] = eps
-            ll += log(wordprob[i])
+        for i in range(0, len(biprob)):
+            prob = mixtureProb(lam, uniprob[i], biprob[i])
+            print(prob)
+            if(prob<eps):
+                ll+=log(eps)
+            else:
+                ll += log(prob)
+        print(str(ll)+'log likelihood');
         Y.append(ll)
-        lam += 0.01
+        lam += 0.001
+    max_value = max(Y)
+    print(max_value)
+    max_index = Y.index(max_value)
+    print(X[max_index])
     plt.plot(X, Y)
     plt.show()
 
